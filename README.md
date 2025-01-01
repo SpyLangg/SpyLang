@@ -45,7 +45,7 @@ SpyLang is built to simulate the high-stakes world of international espionage wh
 To get started with SpyLang, follow these steps:
 
 1. **Download the Compiler**:
-    Download the SpyLang compiler from the [github](https://github.com/SpyLangg/SpyLang/releases).
+    Download the SpyLang compiler from [github](https://github.com/SpyLangg/SpyLang/releases).
 
 2. **Set Environment Variables**:
     Add the SpyLang directory to your system's PATH for easy access.
