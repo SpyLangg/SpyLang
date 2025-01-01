@@ -1,0 +1,11 @@
+mission sumOfSeries(n){
+    assign sum = 0
+    each  i in (1..(n + 1)){
+        sum = sum+(i * i*i)
+        }
+        
+    extract sum
+
+}
+n = 5
+transmit(sumOfSeries(n))

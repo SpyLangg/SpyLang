@@ -1,0 +1,8 @@
+mission test(a){
+    assign a=a
+    chase a!=0{
+        transmit(a)
+        assign a=a-1
+    }
+}
+test(10)

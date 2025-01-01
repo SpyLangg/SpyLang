@@ -1,0 +1,15 @@
+mission test(a){
+    check a>0{
+        transmit("+VE")
+        assign a=10
+        transmit(a)
+    }followup a<0{
+        transmit("-VE")
+        assign b=a
+        transmit(b)
+    }otherwise{
+        transmit("ZERO")
+        assign c=a
+    }
+}
+test(0)

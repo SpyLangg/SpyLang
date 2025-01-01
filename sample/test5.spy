@@ -1,0 +1,6 @@
+assign a=10
+# jdskfhskdj
+chase a!=1{
+    transmit(a)
+    assign a=a+1
+}

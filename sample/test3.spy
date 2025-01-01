@@ -1,0 +1,8 @@
+mission add_each(l){
+    assign a=[]
+    each i in l{
+        add_agent(a,(i+1))}
+    extract length(a)
+}
+assign b=[1,2,3,4]
+transmit(add_each(b)) 
