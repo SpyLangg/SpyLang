@@ -117,11 +117,23 @@ chase (condition) {
     ```bash
     spylang.exe your_file.spy
     ```
-3. Use the SpyLang interpreter to execute the script (`using Shell.exe`):
+3. Use the SpyLang interpreter to execute the script (`using Shell.exe`) use `forward slash` (`/`):
 
     ```bash
-    Spylang > launch("your_file.spy")
+    Spylang > launch("path/to/your_file.spy")
     ```
+4. Use the SpyLang python code to execute the script:
+
+    ```bash
+    python Shell.py
+    Spylang > launch("path/to/your_file.spy")
+    ```
+<p style="text-align:center;">OR</p>
+
+
+```bash
+spylang.exe your_file.spy
+```
 
 ---
 
