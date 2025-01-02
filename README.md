@@ -112,10 +112,15 @@ chase (condition) {
 
 1. Write your SpyLang code in a `.spy` file.
 
-2. Use the SpyLang interpreter to execute the script:
+2. Use the SpyLang interpreter to execute the script (`using SpyLang.exe`):
 
     ```bash
     spylang.exe your_file.spy
+    ```
+3. Use the SpyLang interpreter to execute the script (`using Shell.exe`):
+
+    ```bash
+    Spylang > launch("your_file.spy")
     ```
 
 ---
