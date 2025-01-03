@@ -1,0 +1,9 @@
+mission is_prime(number) {
+    each i in (2..number - 1) {
+        check (number % i == 0) {
+            extract false
+        }
+    }
+    extract true
+}
+transmit(is_prime(1))

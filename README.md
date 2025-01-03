@@ -151,7 +151,7 @@ mission main() {
 ```spylang
 mission fibonacci(n) {
     check (n <= 1) {
-        extract n;
+        extract n
     } otherwise {
         extract fibonacci(n - 1) + fibonacci(n - 2)
     }
@@ -180,7 +180,7 @@ SpyLang comes equipped with several built-in functions to assist in various oper
   A constant representing the value of π.
 
   ```spylang
-  print(math_pi)
+  transmit(math_pi)
   ```
 
 - **`transmit(value)`**:
