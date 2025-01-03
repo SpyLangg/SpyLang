@@ -3,7 +3,7 @@ import string
 import os
 import math
 import sys
-# import Shell
+import Shell
 
 DIGITS = '0123456789'
 LETTERS = string.ascii_letters
@@ -4298,7 +4298,7 @@ def run_file(filename):
 if __name__ == "__main__":
     try:
         if len(sys.argv) < 2:
-            run_file("shell.py")
+            Shell.shell()
 
         else:
             run_file(sys.argv[1])
