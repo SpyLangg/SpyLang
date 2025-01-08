@@ -185,7 +185,6 @@ class Position:
 # TOKENS
 ######################################################################
 
-# Token types
 TT_INT = "INT"
 TT_FLOAT = "FLOAT"
 TT_STRING = "STRING"
@@ -217,7 +216,7 @@ TT_RANGE = "RANGE"
 TT_MOD='MOD'
 TT_SEMICOL = "SEMICOL"
 
-# Keywords in SpyLang
+
 KEYWORDS = [
     'assign',
     'and',    
@@ -425,7 +424,6 @@ class Lexer:
         dot_count = 0
         pos_start = self.pos.copy()
 
-        # Handle negative numbers
         if self.current_char == '-':
             num_str += '-'
             self.advance()
@@ -822,7 +820,7 @@ class IfNode:
             else_case (list): A list of nodes representing the else case. Defaults to an empty list.
         """
         self.cases = cases
-        self.else_case = else_case or []  # Default to an empty list if no else_case
+        self.else_case = else_case or []  
         self.pos_start = self.cases[0][0].pos_start
         self.pos_end = (
             self.else_case[-1].pos_end if self.else_case and hasattr(self.else_case[-1], 'pos_end')
@@ -1220,24 +1218,19 @@ class Parser:
         statements = []
         pos_start = self.current_tok.pos_start.copy()
 
-        # Skip initial newlines
         while self.current_tok.type == TT_NEWLINE:
             res.register_advancement()
             self.advance()
 
-        # Parse the first statement
         statement = res.register(self.statement())
         if res.error: return res
         statements.append(statement)
 
-        # Continue parsing additional statements
         while self.current_tok.type == TT_NEWLINE:
-            # Skip consecutive newlines
             while self.current_tok.type == TT_NEWLINE:
                 res.register_advancement()
                 self.advance()
 
-            # Parse next statement
             statement = res.try_register(self.statement())
             if not statement:
                 self.reverse(res.to_reverse_count)
@@ -1292,7 +1285,7 @@ class Parser:
         """
         res = ParseResult()
 
-        # Handle variable assignment using 'assign'
+
         if self.current_tok.matches(TT_KEYWORD, 'assign'):
             res.register_advancement()
             self.advance()
@@ -1321,7 +1314,7 @@ class Parser:
 
             return res.success(VarAssignNode(var_name, expr))
 
-        # Handle reassignment or expressions
+      
         if self.current_tok.type == TT_IDENTIFIER:
             var_name = self.current_tok
             res.register_advancement()
@@ -1335,10 +1328,10 @@ class Parser:
                     return res
                 return res.success(VarAssignNode(var_name, expr))
 
-            # If not '=', treat it as a regular identifier (rollback)
+            
             self.reverse()
 
-        # Handle binary and logical operations
+      
         node = res.register(self.bin_op(self.comp_expr, ((TT_KEYWORD, 'and'), (TT_KEYWORD, 'or'))))
 
         if res.error:
@@ -1405,7 +1398,7 @@ class Parser:
         res = ParseResult()
         tok = self.current_tok
 
-        if tok.type in (TT_PLUS, TT_MINUS):  # Handle unary plus/minus
+        if tok.type in (TT_PLUS, TT_MINUS):  
             res.register_advancement()
             self.advance()
             factor = res.register(self.factor())
@@ -1601,7 +1594,7 @@ class Parser:
         """
         res = ParseResult()
 
-        # Ensure the start of the `check` block
+      
         if not self.current_tok.matches(TT_KEYWORD, 'check'):
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -1623,7 +1616,7 @@ class Parser:
         res.register_advancement()
         self.advance()
 
-        # Parse the body of the `check` block
+       
         body = res.register(self.statements())
         if res.error: return res
 
@@ -1636,7 +1629,7 @@ class Parser:
         res.register_advancement()
         self.advance()
 
-        # Handle followup and otherwise branches
+        
         followups = []
         else_case = None
 
@@ -1668,7 +1661,7 @@ class Parser:
             res.register_advancement()
             self.advance()
             followups.append((followup_condition, followup_body, False))
-            # followups.append((followup_condition, followup_body))
+            
 
         if self.current_tok.matches(TT_KEYWORD, 'otherwise'):
             res.register_advancement()
@@ -1730,7 +1723,7 @@ class Parser:
             res.register_advancement()
             self.advance()
 
-            # Skip newlines inside the block
+
             while self.current_tok.type == TT_NEWLINE:
                 res.register_advancement()
                 self.advance()
@@ -1738,7 +1731,7 @@ class Parser:
             body = res.register(self.statements())
             if res.error: return res
 
-            # Skip newlines before closing brace
+        
             while self.current_tok.type == TT_NEWLINE:
                 res.register_advancement()
                 self.advance()
@@ -1765,7 +1758,7 @@ class Parser:
         res = ParseResult()
         cases, else_case = [], None
 
-        # Parse followup cases
+        
         while self.current_tok.matches(TT_KEYWORD, 'followup'):
             res.register_advancement()
             self.advance()
@@ -1782,7 +1775,7 @@ class Parser:
             res.register_advancement()
             self.advance()
 
-            # Skip newlines inside blocks
+            
             while self.current_tok.type == TT_NEWLINE:
                 res.register_advancement()
                 self.advance()
@@ -1790,7 +1783,7 @@ class Parser:
             body = res.register(self.statements())
             if res.error: return res
 
-            # Skip newlines before closing brace
+            
             while self.current_tok.type == TT_NEWLINE:
                 res.register_advancement()
                 self.advance()
@@ -1805,7 +1798,7 @@ class Parser:
             self.advance()
             cases.append((condition, body, True))
 
-        # Parse otherwise case
+        
         if self.current_tok.matches(TT_KEYWORD, 'otherwise'):
             res.register_advancement()
             self.advance()
@@ -1819,7 +1812,7 @@ class Parser:
             res.register_advancement()
             self.advance()
 
-            # Skip newlines inside blocks
+
             while self.current_tok.type == TT_NEWLINE:
                 res.register_advancement()
                 self.advance()
@@ -1827,7 +1820,6 @@ class Parser:
             else_body = res.register(self.statements())
             if res.error: return res
 
-            # Skip newlines before closing brace
             while self.current_tok.type == TT_NEWLINE:
                 res.register_advancement()
                 self.advance()
@@ -1873,7 +1865,7 @@ class Parser:
             "Invalid condition in 'check' statement"
         ))
 
-        # Expect an opening curly brace '{'
+        
         if self.current_tok.type != TT_LCURLY:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -1883,12 +1875,10 @@ class Parser:
         res.register_advancement()
         self.advance()
 
-        # Check if the block contains multiple statements or a single statement
         if self.current_tok.type == TT_NEWLINE:
             res.register_advancement()
             self.advance()
 
-            # Parse multiple statements
             statements = res.register(self.statements())
             if res.error: return res
             cases.append((condition, statements, True))
@@ -1903,7 +1893,6 @@ class Parser:
             self.advance()
 
         else:
-            # Parse a single statement
             expr = res.register(self.statement())
             if res.error: return res
             cases.append((condition, expr, False))
@@ -1917,7 +1906,7 @@ class Parser:
         res.register_advancement()
         self.advance()
 
-        # Parse any "followup" or "otherwise" cases
+        
         all_cases = res.register(self.if_expr_b_or_c())
         if res.error: return res
         new_cases, else_case = all_cases
@@ -1962,18 +1951,8 @@ class Parser:
         res.register_advancement()
         self.advance()
 
-        # Parse either a range or a variable (list)
-        if self.current_tok.type == TT_LPAREN or self.current_tok.type == TT_INT or self.current_tok.type == TT_FLOAT:
-            iterable = res.register(self.range_expr())
-            if res.error: return res
-        elif self.current_tok.type == TT_IDENTIFIER:
-            iterable = res.register(self.atom())  # Allow variables like `l`
-            if res.error: return res
-        else:
-            return res.failure(InvalidSyntaxError(
-                self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected range or variable"
-            ))
+        iterable = res.register(self.expr())
+        if res.error: return res
 
         if self.current_tok.type != TT_LCURLY:
             return res.failure(InvalidSyntaxError(
@@ -1997,6 +1976,7 @@ class Parser:
         self.advance()
 
         return res.success(ForNode(var_name, iterable, None, None, body, True))
+
     
     def while_expr(self):
         """
@@ -2058,7 +2038,7 @@ class Parser:
         """
         res = ParseResult()
 
-        # Ensure the current token is 'mission'
+        
         if not self.current_tok.matches(TT_KEYWORD, 'mission'):
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -2068,7 +2048,7 @@ class Parser:
         res.register_advancement()
         self.advance()
 
-        # Parse function name
+    
         if self.current_tok.type == TT_IDENTIFIER:
             var_name_tok = self.current_tok
             res.register_advancement()
@@ -2079,7 +2059,6 @@ class Parser:
                 "Expected function name"
             ))
 
-        # Parse function arguments
         if self.current_tok.type != TT_LPAREN:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -2117,7 +2096,6 @@ class Parser:
         res.register_advancement()
         self.advance()
 
-        # Parse function body
         if self.current_tok.type != TT_LCURLY:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -3084,7 +3062,6 @@ class List(Value):
             str: The string representation of the list.
         """
         return ", ".join([str(x) for x in self.elements])
-        # return ", ".join([str(x) for x in self.elements])
 
     def __repr__(self):
         """
@@ -3093,7 +3070,7 @@ class List(Value):
         Returns:
             str: The string representation of the list.
         """
-        # return ", ".join([repr(x) for x in self.elements])
+        
         return f'[{", ".join([repr(x) for x in self.elements])}]'
 
 #############################################################################
@@ -3350,7 +3327,7 @@ class BuiltInFunction(BaseFunction):
         """
         print(str(exec_ctx.symbol_table.get('value')))
         return RTResult().success('')
-        # return RTResult().success(Number(0))
+        
     execute_print.arg_names = ['value']
     
     def execute_print_ret(self, exec_ctx):
@@ -3749,7 +3726,7 @@ class Interpreter:
         Raises:
             Exception: If the visit method for the node type is not defined.
         """
-        if isinstance(node, list):  # Handle native Python lists
+        if isinstance(node, list):  
             raise Exception("Unexpected Python list object encountered during interpretation.")
 
         method_name = f'visit_{type(node).__name__}'
@@ -3874,7 +3851,6 @@ class Interpreter:
                 context
             ))
 
-        # Wrap primitive types in their respective classes
         if isinstance(value, int):
             value = Number(value)
         elif isinstance(value, float):
@@ -3903,7 +3879,6 @@ class Interpreter:
         value = res.register(self.visit(node.value_node, context))
         if res.should_return(): return res
 
-        # Wrap Python lists into the List class
         if isinstance(value, list):
             value = List(value)
 
@@ -4010,19 +3985,19 @@ class Interpreter:
                 return res.success(Number.null if should_return_null else expr_value)
 
         if node.else_case:
-            # Ensure else_case is handled as a Python list
             if isinstance(node.else_case, list):
                 for expr in node.else_case:
                     res.register(self.visit(expr, context))
                     if res.should_return(): return res
                 return res.success(Number.null)
             else:
-                # Visit else_case if it's a node
+              
                 else_value = res.register(self.visit(node.else_case, context))
                 if res.should_return(): return res
                 return res.success(else_value)
 
         return res.success(Number.null)
+
 
     def visit_ForNode(self, node, context):
         """
@@ -4038,49 +4013,32 @@ class Interpreter:
         res = RTResult()
         elements = []
 
-        # Evaluate the iterable (could be a range or a list)
-        iterable = res.register(self.visit(node.start_value_node, context))
+        iterable_value = res.register(self.visit(node.start_value_node, context))
         if res.should_return(): return res
 
-        if isinstance(iterable, List):
-            # Iterate over a List
-            for item in iterable.elements:
-                context.symbol_table.set(node.var_name_tok.value, item)
-                value = res.register(self.visit(node.body_node, context))
-                if res.should_return() and not res.loop_should_continue and not res.loop_should_break:
-                    return res
-
-                if res.loop_should_continue:
-                    continue
-
-                if res.loop_should_break:
-                    break
-
-                elements.append(value)
-        elif isinstance(iterable, RangeNode):
-            # Handle ranges as lists
-            range_list = [Number(i) for i in range(int(iterable.start_value.value), int(iterable.end_value.value) + 1)]
-            for item in range_list:
-                context.symbol_table.set(node.var_name_tok.value, item)
-                value = res.register(self.visit(node.body_node, context))
-                if res.should_return() and not res.loop_should_continue and not res.loop_should_break:
-                    return res
-
-                if res.loop_should_continue:
-                    continue
-
-                if res.loop_should_break:
-                    break
-
-                elements.append(value)
+        if isinstance(iterable_value, String):
+            elements = iterable_value.value
         else:
             return res.failure(RTError(
                 node.start_value_node.pos_start, node.start_value_node.pos_end,
-                "Expected a list or range to iterate over",
+                "Expected a string to iterate over",
                 context
             ))
 
-        return res.success(Number.null)
+
+        for element in elements:
+            context.symbol_table.set(node.var_name_tok.value, String(element))
+            body_result = res.register(self.visit(node.body_node, context))
+            if res.should_return(): 
+                if res.loop_should_continue: 
+                    continue
+                if res.loop_should_break: 
+                    break
+                return res
+
+        return res.success(None)
+
+
 
     def visit_WhileNode(self, node, context):
         """
@@ -4282,12 +4240,10 @@ def run_file(filename):
     try:
         with open(filename, "r") as file:
             script = file.read()
-        # Assume `run` is the entry point of your interpreter
+        
         result, error = run(filename, script)
         if error:
             print(error.as_string())
-        # else:
-            # print(result)  # Optionally print the result if needed
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except KeyboardInterrupt:

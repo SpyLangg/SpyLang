@@ -16,5 +16,3 @@ def shell():
 
         elif result and shell ==False:     
             print(repr(result[0]))
-
-shell()
