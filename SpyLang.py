@@ -1532,6 +1532,7 @@ class Parser:
             "Expected int, float, identifier, '+', '-', '(', '[', check', 'each', 'chase', 'mission'"
         ))
 
+
     def list_expr(self):
         """
         Parses a list expression from the token list.
@@ -1547,7 +1548,7 @@ class Parser:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
                 f"Expected '['"
-            ))
+        ))
 
         res.register_advancement()
         self.advance()
@@ -1557,16 +1558,11 @@ class Parser:
             self.advance()
         else:
             element_nodes.append(res.register(self.expr()))
-            if res.error:
-                return res.failure(InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected ']', 'VAR', 'check', 'each', 'chase', 'mission', int, float, identifier, '+', '-', '(', '[' or 'not'"
-                ))
+            if res.error: return res
 
             while self.current_tok.type == TT_COMMA:
                 res.register_advancement()
                 self.advance()
-
                 element_nodes.append(res.register(self.expr()))
                 if res.error: return res
 
@@ -1579,11 +1575,8 @@ class Parser:
             res.register_advancement()
             self.advance()
 
-        return res.success(ListNode(
-            element_nodes,
-            pos_start,
-            self.current_tok.pos_end.copy()
-        ))
+        return res.success(ListNode(element_nodes, pos_start, self.current_tok.pos_end.copy()))
+
 
     def if_expr(self):
         """
@@ -3062,6 +3055,15 @@ class List(Value):
             str: The string representation of the list.
         """
         return ", ".join([str(x) for x in self.elements])
+    
+    def iterate(self):
+        '''
+        Returns an iterator for the list.
+        
+        Returns:
+            Iterator: An iterator for the list.
+        '''
+        return iter(self.elements)
 
     def __repr__(self):
         """
@@ -3807,6 +3809,7 @@ class Interpreter:
         range_list = List([Number(i) for i in range(int(start_value.value), int(end_value.value) + 1)])
         return res.success(range_list)
 
+
     def visit_ListNode(self, node, context):
         """
         Visits a list node and evaluates it.
@@ -3827,7 +3830,8 @@ class Interpreter:
                 return res
             elements.append(element_value)
 
-        return res.success(elements)
+        return res.success(List(elements))
+
 
     def visit_VarAccessNode(self, node, context):
         """
@@ -4014,29 +4018,32 @@ class Interpreter:
         elements = []
 
         iterable_value = res.register(self.visit(node.start_value_node, context))
-        if res.should_return(): return res
+        if res.should_return():
+            return res
 
         if isinstance(iterable_value, String):
             elements = iterable_value.value
+        elif isinstance(iterable_value, List):
+            elements = iterable_value.elements
         else:
             return res.failure(RTError(
                 node.start_value_node.pos_start, node.start_value_node.pos_end,
-                "Expected a string to iterate over",
+                "Expected a string or a list to iterate over",
                 context
             ))
 
-
         for element in elements:
-            context.symbol_table.set(node.var_name_tok.value, String(element))
+            context.symbol_table.set(node.var_name_tok.value, element)
             body_result = res.register(self.visit(node.body_node, context))
-            if res.should_return(): 
-                if res.loop_should_continue: 
+            if res.should_return():
+                if res.loop_should_continue:
                     continue
-                if res.loop_should_break: 
+                if res.loop_should_break:
                     break
-                return res
+                return res  
 
         return res.success(None)
+
 
 
 
