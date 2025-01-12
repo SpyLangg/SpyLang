@@ -208,6 +208,7 @@ TT_LTE = "LTE"
 TT_GTE = 'GTE'
 TT_ARROW = 'ARROW'
 TT_COMMA = 'COMMA'
+TT_DOT='DOT'
 TT_LSQUARE = 'LSQUARE'
 TT_RSQUARE = 'RSQUARE'
 TT_LCURLY = 'LCURLY'
@@ -336,10 +337,15 @@ class Lexer:
         while self.current_char != None:
             if self.current_char in " \t":
                 self.advance()
+
+
             elif self.current_char == ".":
                 pos_start = self.pos.copy()
                 if self.current_char == ".":
+                    self.advance()
                     tokens.append(Token(TT_RANGE, pos_start=pos_start, pos_end=self.pos))
+                else:
+                    tokens.append(Token(TT_DOT, pos_start=self.pos))
                     self.advance()
       
             elif self.current_char in DIGITS:
@@ -671,7 +677,7 @@ class ListNode:
 class RangeNode:
     """
     Represents a range node in the abstract syntax tree (AST).
-    
+
     Attributes:
         start_node (Node): The starting node of the range.
         end_node (Node): The ending node of the range.
@@ -681,7 +687,7 @@ class RangeNode:
     def __init__(self, start_node, end_node):
         """
         Initializes a new range node instance.
-        
+
         Args:
             start_node (Node): The starting node of the range.
             end_node (Node): The ending node of the range.
@@ -690,6 +696,41 @@ class RangeNode:
         self.end_node = end_node
         self.pos_start = self.start_node.pos_start
         self.pos_end = self.end_node.pos_end
+
+    def evaluate(self, context):
+        """
+        Evaluate the range bounds and return a Range object.
+
+        Args:
+            context (Context): The runtime context.
+
+        Returns:
+            Range: The evaluated range.
+        """
+        res = RTResult()
+
+ 
+        start_value = res.register(context.interpreter.visit(self.start_node, context))
+        if res.should_return():
+            return res
+
+
+        end_value = res.register(context.interpreter.visit(self.end_node, context))
+        if res.should_return():
+            return res
+
+
+        if not isinstance(start_value, Number) or not isinstance(end_value, Number):
+            return res.failure(RTError(
+                self.start_node.pos_start, self.end_node.pos_end,
+                "Range bounds must be integers.",
+                context
+            ))
+
+      
+        start_int = int(start_value.value)
+        end_int = int(end_value.value)
+        return res.success(RangeValue(start_int, end_int))
 
 class VarAccessNode:
     """
@@ -861,6 +902,7 @@ class ForNode:
         self.should_return_null = should_return_null
         self.pos_start = self.var_name_tok.pos_start
         self.pos_end = self.body_node.pos_end
+        
 
 class WhileNode:
     """
@@ -1156,10 +1198,11 @@ class Parser:
         if self.tok_idx >= 0 and self.tok_idx < len(self.tokens):
             self.current_tok = self.tokens[self.tok_idx]
 
+
     def range_expr(self):
         """
         Parses a range expression from the token list.
-        
+
         Returns:
             ParseResult: The result of parsing the range expression.
         """
@@ -1170,7 +1213,8 @@ class Parser:
             self.advance()
 
         start_value = res.register(self.arith_expr())
-        if res.error: return res
+        if res.error:
+            return res
 
         if self.current_tok.type != TT_RANGE:
             return res.failure(InvalidSyntaxError(
@@ -1181,14 +1225,17 @@ class Parser:
         res.register_advancement()
         self.advance()
 
+
         end_value = res.register(self.arith_expr())
-        if res.error: return res
+        if res.error:
+            return res
 
         if self.current_tok.type == TT_RPAREN:
             res.register_advancement()
             self.advance()
 
         return res.success(RangeNode(start_value, end_value))
+    
 
     def parse(self):
         """
@@ -1535,8 +1582,8 @@ class Parser:
 
     def list_expr(self):
         """
-        Parses a list expression from the token list.
-        
+        Parses a list expression from the token list, supporting nested structures.
+
         Returns:
             ParseResult: The result of parsing the list expression.
         """
@@ -1547,8 +1594,8 @@ class Parser:
         if self.current_tok.type != TT_LSQUARE:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                f"Expected '['"
-        ))
+                "Expected '['"
+            ))
 
         res.register_advancement()
         self.advance()
@@ -1558,18 +1605,20 @@ class Parser:
             self.advance()
         else:
             element_nodes.append(res.register(self.expr()))
-            if res.error: return res
+            if res.error:
+                return res
 
             while self.current_tok.type == TT_COMMA:
                 res.register_advancement()
                 self.advance()
                 element_nodes.append(res.register(self.expr()))
-                if res.error: return res
+                if res.error:
+                    return res
 
             if self.current_tok.type != TT_RSQUARE:
                 return res.failure(InvalidSyntaxError(
                     self.current_tok.pos_start, self.current_tok.pos_end,
-                    f"Expected ',' or ']'"
+                    "Expected ',' or ']'"
                 ))
 
             res.register_advancement()
@@ -1907,9 +1956,10 @@ class Parser:
 
         return res.success((cases, else_case))
 
+
     def for_expr(self):
         """
-        Parses a for loop from the token list.
+        Parses a for loop from the token list, enabling iteration over lists, strings, ranges, and nested structures.
         
         Returns:
             ParseResult: The result of parsing the for loop.
@@ -1930,7 +1980,6 @@ class Parser:
                 self.current_tok.pos_start, self.current_tok.pos_end,
                 "Expected identifier"
             ))
-
         var_name = self.current_tok
         res.register_advancement()
         self.advance()
@@ -1940,37 +1989,42 @@ class Parser:
                 self.current_tok.pos_start, self.current_tok.pos_end,
                 "Expected 'in'"
             ))
-
         res.register_advancement()
         self.advance()
 
-        iterable = res.register(self.expr())
-        if res.error: return res
+    
+        if self.current_tok.type == TT_LPAREN:
+            iterable = res.register(self.range_expr())  
+        else:
+            iterable = res.register(self.expr())  
+
+        if res.error:
+            return res
 
         if self.current_tok.type != TT_LCURLY:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected '{'"
+                "Expected '{' to start block"
             ))
-
         res.register_advancement()
         self.advance()
 
+    
         body = res.register(self.statements())
-        if res.error: return res
+        if res.error:
+            return res
 
+        
         if self.current_tok.type != TT_RCURLY:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected '}'"
+                "Expected '}' to end block"
             ))
-
         res.register_advancement()
         self.advance()
 
         return res.success(ForNode(var_name, iterable, None, None, body, True))
 
-    
     def while_expr(self):
         """
         Parses a while loop from the token list.
@@ -2546,6 +2600,25 @@ class Value:
             self.context
         )
 
+class RangeValue(Value):
+    """
+    Represents a range (start..end) as an iterable value in SpyLang.
+    """
+    def __init__(self, start, end):
+        super().__init__()
+        self.start = start
+        self.end = end
+
+    def iter(self):
+        """
+        Returns an iterator for the range.
+        """
+        return iter(range(self.start, self.end + 1))  
+
+    def __repr__(self):
+        return f"Range({self.start}..{self.end})"
+
+
 class Number(Value):
     """
     Represents a number value in SpyLang.
@@ -2563,6 +2636,12 @@ class Number(Value):
         super().__init__()
         self.value = value
 
+    def to_int(self):
+        if isinstance(self.value, Number): 
+            return int(self.value.value)
+        return int(self.value)
+
+
     def added_to(self, other):
         """
         Adds the number to another number.
@@ -2575,9 +2654,13 @@ class Number(Value):
             Error: An error if the operation is not supported.
         """
         if isinstance(other, Number):
-            return Number(self.value + other.value).set_context(self.context), None
+            return Number(self.to_int() + other.value).set_context(self.context), None
+        elif isinstance(other, int):
+            return Number(self.value + other).set_context(self.context), None
         else:
-            return None, Value.illegal_operation(self, other)
+            return None, self.illegal_operation(other)
+
+
 
     def subbed_by(self, other):
         """
@@ -2592,6 +2675,8 @@ class Number(Value):
         """
         if isinstance(other, Number):
             return Number(self.value - other.value).set_context(self.context), None
+        elif isinstance(other, (int, float)):
+            return Number(self.value - other).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -2608,6 +2693,8 @@ class Number(Value):
         """
         if isinstance(other, Number):
             return Number(self.value * other.value).set_context(self.context), None
+        elif isinstance(other, (int, float)):
+            return Number(self.value * other).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -2628,6 +2715,12 @@ class Number(Value):
                     other.pos_start, other.pos_end,
                     'Division by zero',
                     self.context
+                )
+        elif isinstance(other, (int, float)):
+            if other == 0:
+                return None, RTError(
+                    self.pos_start, self.pos_end,
+                    "Division by zero"
                 )
 
             return Number(self.value / other.value).set_context(self.context), None
@@ -2848,6 +2941,27 @@ class Number(Value):
             str: The string representation of the number.
         """
         return str(self.value)
+    
+class Range(Value):
+    """
+    Represents a range value in SpyLang, generated by the '..' operator.
+    """
+    def __init__(self, start, end):
+        super().__init__()
+        if not isinstance(start, int) or not isinstance(end, int):
+            raise ValueError("Range bounds must be integers.")
+        self.start = start
+        self.end = end
+
+    def generate_elements(self):
+        """
+        Generates elements within the range.
+        """
+        return list(range(self.start, self.end + 1))
+
+    def __repr__(self):
+        return f"({self.start}..{self.end})"
+    
 
 class String(Value):
     """
@@ -3056,7 +3170,7 @@ class List(Value):
         """
         return ", ".join([str(x) for x in self.elements])
     
-    def iterate(self):
+    def __iter__(self):
         '''
         Returns an iterator for the list.
         
@@ -3073,7 +3187,7 @@ class List(Value):
             str: The string representation of the list.
         """
         
-        return f'[{", ".join([repr(x) for x in self.elements])}]'
+        return f"[" + ", ".join(repr(el) for el in self.elements) + "]"
 
 #############################################################################
 #  BASE FUNCTION
@@ -3780,34 +3894,28 @@ class Interpreter:
             String(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
     
+
     def visit_RangeNode(self, node, context):
-        """
-        Visits a range node and evaluates it.
-        
-        Args:
-            node (RangeNode): The range node to visit.
-            context (Context): The context in which the node is being evaluated.
-        
-        Returns:
-            RTResult: The result of evaluating the range node.
-        """
         res = RTResult()
 
         start_value = res.register(self.visit(node.start_node, context))
-        if res.should_return(): return res
+        if res.should_return():
+            return res
 
         end_value = res.register(self.visit(node.end_node, context))
-        if res.should_return(): return res
+        if res.should_return():
+            return res
 
         if not isinstance(start_value, Number) or not isinstance(end_value, Number):
             return res.failure(RTError(
                 node.pos_start, node.pos_end,
-                "Range bounds must be numbers",
+                "Range bounds must be integers.",
                 context
             ))
 
-        range_list = List([Number(i) for i in range(int(start_value.value), int(end_value.value) + 1)])
-        return res.success(range_list)
+        start = int(start_value.value)
+        end = int(end_value.value)
+        return res.success(RangeValue(start, end))
 
 
     def visit_ListNode(self, node, context):
@@ -4003,50 +4111,52 @@ class Interpreter:
         return res.success(Number.null)
 
 
+
     def visit_ForNode(self, node, context):
         """
-        Visits a for loop node and evaluates it.
-        
+        Execute a 'for' loop node in the runtime context.
+
         Args:
-            node (ForNode): The for loop node to visit.
-            context (Context): The context in which the node is being evaluated.
-        
+            node (ForNode): The 'for' loop node to execute.
+            context (Context): The runtime context.
+
         Returns:
-            RTResult: The result of evaluating the for loop node.
+            RTResult: The result of executing the 'for' loop.
         """
         res = RTResult()
-        elements = []
 
         iterable_value = res.register(self.visit(node.start_value_node, context))
         if res.should_return():
             return res
 
-        if isinstance(iterable_value, String):
-            elements = iterable_value.value
+        if isinstance(iterable_value, RangeValue):
+            elements = list(iterable_value.iter())
         elif isinstance(iterable_value, List):
             elements = iterable_value.elements
+        elif isinstance(iterable_value, String):
+            elements = list(iterable_value.value)
         else:
             return res.failure(RTError(
-                node.start_value_node.pos_start, node.start_value_node.pos_end,
-                "Expected a string or a list to iterate over",
+                node.pos_start, node.pos_end,
+                "Expected a list, string, or range as an iterable.",
                 context
             ))
 
+        
         for element in elements:
             context.symbol_table.set(node.var_name_tok.value, element)
-            body_result = res.register(self.visit(node.body_node, context))
-            if res.should_return():
-                if res.loop_should_continue:
-                    continue
-                if res.loop_should_break:
-                    break
-                return res  
+            result = res.register(self.visit(node.body_node, context))
+            if res.should_return() and not res.loop_should_continue and not res.loop_should_break:
+                return res
+
+            if res.loop_should_continue:
+                continue
+            if res.loop_should_break:
+                break
 
         return res.success(None)
 
-
-
-
+    
     def visit_WhileNode(self, node, context):
         """
         Visits a while loop node and evaluates it.

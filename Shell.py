@@ -11,7 +11,6 @@ def shell():
             if error:
                 print(error.as_string())
             elif result is not None:
-                # Handle List results differently
                 if isinstance(result, SpyLang.List):
                     for element in result.elements:
                         print(element)

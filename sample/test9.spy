@@ -1,4 +1,4 @@
 assign a="SpyLang"
 each i in a{
-    transmit(i+" SpyLang")
+    transmit(i)
 }
