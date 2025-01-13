@@ -587,6 +587,8 @@ class Lexer:
         """
         self.advance()
         while self.current_char != '\n':
+            if self.current_char==None:
+                break
             self.advance()
         self.advance()
 
