@@ -1,13 +1,9 @@
 from strings_with_arrow import *
-import math
 import sys
 import Shell
-from symboltable import SymbolTable
-from rtresult import RTResult
-from values.number import Number
 from errors import KeyboardInterruptError
 from func.builtin_func import *
-from interpreterr import Interpreter
+
 
 
 

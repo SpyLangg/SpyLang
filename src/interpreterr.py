@@ -8,7 +8,6 @@ from errors import RTError
 from values.value import Value
 from SpyLang import *
 from func.basefunc import BaseFunction
-# from function import Function
 
 class Interpreter:
     """
