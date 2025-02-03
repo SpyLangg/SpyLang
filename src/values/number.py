@@ -1,5 +1,5 @@
-from values.value import Value
-from errors import RTError
+from src.values.value import Value
+from src.errors import RTError
 
 class Number(Value):
     """

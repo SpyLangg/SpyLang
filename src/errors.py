@@ -1,4 +1,4 @@
-from strings_with_arrow import string_with_arrows
+from src.strings_with_arrow import string_with_arrows
 
 class Error:
     """

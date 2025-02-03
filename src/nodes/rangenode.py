@@ -1,7 +1,7 @@
-from rtresult import RTResult
-from values.number import Number
-from errors import RTError
-from values.rangevalue import RangeValue
+from src.rtresult import RTResult
+from src.values.number import Number
+from src.errors import RTError
+from src.values.rangevalue import RangeValue
 
 class RangeNode:
     """

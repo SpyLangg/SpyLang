@@ -1,5 +1,5 @@
-from errors import RTError
-from rtresult import RTResult
+from src.errors import RTError
+from src.rtresult import RTResult
 
 class Value:
     """

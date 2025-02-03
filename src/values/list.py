@@ -1,6 +1,6 @@
-from values.value import Value
-from values.number import Number
-from errors import RTError
+from src.values.value import Value
+from src.values.number import Number
+from src.errors import RTError
 
 
 class List(Value):

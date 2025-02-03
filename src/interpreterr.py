@@ -1,13 +1,13 @@
-from rtresult import RTResult
-from values.number import Number
-from values.list import List
-from values.string import String
-from values.rangevalue import RangeValue
-from constant import *
-from errors import RTError
-from values.value import Value
+from src.rtresult import RTResult
+from src.values.number import Number
+from src.values.list import List
+from src.values.string import String
+from src.values.rangevalue import RangeValue
+from src.constant import *
+from src.errors import RTError
+from src.values.value import Value
 from SpyLang import *
-from func.basefunc import BaseFunction
+from src.func.basefunc import BaseFunction
 
 class Interpreter:
     """

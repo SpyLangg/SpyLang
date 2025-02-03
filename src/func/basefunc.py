@@ -1,8 +1,8 @@
-from values.value import Value
-from context import Context
-from symboltable import SymbolTable
-from rtresult import RTResult
-from errors import RTError
+from src.values.value import Value
+from src.context import Context
+from src.symboltable import SymbolTable
+from src.rtresult import RTResult
+from src.errors import RTError
 
 
 class BaseFunction(Value):

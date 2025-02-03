@@ -1,15 +1,15 @@
-from func.basefunc import BaseFunction
-from rtresult import RTResult
-from values.string import String
+from src.func.basefunc import BaseFunction
+from src.rtresult import RTResult
+from src.values.string import String
 import os
-from values.number import Number
-from values.list import List
-from errors import RTError
-from symboltable import SymbolTable
-from lexer import Lexer
-from parser import Parser
-from interpreterr import Interpreter
-from context import Context
+from src.values.number import Number
+from src.values.list import List
+from src.errors import RTError
+from src.symboltable import SymbolTable
+from src.lexer import Lexer
+from src.parser import Parser
+from src.interpreterr import Interpreter
+from src.context import Context
 
 
 class BuiltInFunction(BaseFunction):

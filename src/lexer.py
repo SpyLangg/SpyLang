@@ -1,7 +1,7 @@
-from constant import *
-from position import Position
-from tokens import Token
-from errors import *
+from src.constant import *
+from src.position import Position
+from src.tokens import Token
+from src.errors import *
 
 class Lexer:
     """

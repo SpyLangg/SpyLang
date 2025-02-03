@@ -1,8 +1,8 @@
-from strings_with_arrow import *
+from src.strings_with_arrow import *
 import sys
-import Shell
-from errors import KeyboardInterruptError
-from func.builtin_func import *
+import src.Shell
+from src.errors import KeyboardInterruptError
+from src.func.builtin_func import *
 
 
 
@@ -25,7 +25,7 @@ def run_file(filename):
 if __name__ == "__main__":
     try:
         if len(sys.argv) < 2:
-            Shell.shell()
+            src.Shell.shell()
 
         else:
             run_file(sys.argv[1])
